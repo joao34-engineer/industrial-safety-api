@@ -1,5 +1,5 @@
 import type {Request, Response, NextFunction} from 'express'
-import {env} from '../../env.js'
+import {env} from '../../env.ts'
 
 
 export class APIError extends Error {
