@@ -1,0 +1,1 @@
+Don't leave leftover data from previous test runs, 2) Mock out third-party API calls and expensive modules, 3) Handle authentication efficiently, 4) Be aware of potential race conditions, 5) Test the behavior, not implementation details, 6) Write isolated tests, 7) Use descriptive test names, 8) Test both happy path and edge cases

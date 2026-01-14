@@ -12,8 +12,7 @@ export default async function setup() {
     await db.execute(sql`DROP TABLE IF EXISTS ${entries} CASCADE;`);
     await db.execute(sql`DROP TABLE IF EXISTS ${habits} CASCADE;`);
     await db.execute(sql`DROP TABLE IF EXISTS ${users} CASCADE;`);
-    execSync(`npx drizzle-kit push -- url=${process.env.DATABASE_URL}
-      " --schema=./src/db/schema.ts" --dialect="postgresql"`, 
+    execSync(`npx drizzle-kit push --url="${process.env.DATABASE_URL}" --schema=./src/db/schema.ts --dialect=postgresql`, 
       { 
         stdio: 'inherit',
         cwd: process.cwd()

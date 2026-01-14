@@ -19,10 +19,6 @@ app.use(
 })
 )
 
-app.use((_,__, next) => {
-  next(new APIError('Not Found', 'NotFoundError', 404))
-})
-
 
 app.get('/health', (req, res) => {
   res.send(
@@ -33,6 +29,10 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes) 
 app.use('/api/users', userRoutes)
 app.use('/api/habits', habitRoutes) 
+
+app.use((_,__, next) => {
+  next(new APIError('Not Found', 'NotFoundError', 404))
+})
 
 app.use(errorHandler)
 
