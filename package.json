@@ -1,7 +1,7 @@
 {
-  "name": "api-design-v5",
+  "name": "safesite-api",
   "version": "1.0.0",
-  "description": "Habit Tracker API for Node.js course",
+  "description": "SafeSite Field Compliance & Inspection API - Industrial Safety Protocol Management",
   "main": "src/index.ts",
   "type": "module",
   "engines": {
@@ -10,7 +10,8 @@
   "scripts": {
     "dev": "node --watch src/index.ts",
     "start": "node src/index.ts",
-    
+    "build": "tsc",
+    "build:check": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:migrate": "drizzle-kit migrate",
@@ -21,14 +22,24 @@
     "test:coverage": "vitest run --coverage"
   },
   "keywords": [
-    "habit-tracker",
-    "api",
+    "safesite",
+    "safety-compliance",
+    "industrial-safety",
+    "protocol-management",
+    "field-inspection",
+    "compliance-tracking",
+    "rest-api",
     "nodejs",
     "express",
-    "drizzle"
+    "postgresql",
+    "drizzle",
+    "typescript",
+    "docker",
+    "kubernetes",
+    "jwt-authentication"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "João Marcelo",
+  "license": "MIT",
   "dependencies": {
     "@epic-web/remember": "^1.1.0",
     "bcrypt": "^5.1.1",

@@ -11,6 +11,9 @@ import {
 import { relations } from 'drizzle-orm'
 import {createInsertSchema, createSelectSchema} from 'drizzle-zod'
 
+/**
+ * Users table - Stores safety personnel credentials and profile information
+ */
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: 255 }).notNull().unique(),
@@ -22,88 +25,123 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
-export const habits = pgTable('habits', {
+/**
+ * Protocols table - Stores recurring safety inspection protocols
+ * Examples: "Morning PPE Check", "Lockout/Tagout Verification"
+ */
+export const protocols = pgTable('protocols', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id')
     .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
+  /** Protocol name (e.g., "Morning PPE Inspection", "Voltage Detector Test") */
   name: varchar('name', { length: 200 }).notNull(),
+  /** Detailed description of the safety protocol */
   description: text('description'),
+  /** Frequency: DAILY, WEEKLY, MONTHLY, SHIFT_START, SHIFT_END */
   frequency: varchar('frequency', { length: 20 }).notNull(),
+  /** Number of required compliance checks per period */
   targetCount: integer('target_count').default(1),
+  /** Whether this protocol is currently enforced */
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
-export const entries = pgTable('entries', {
+/**
+ * Compliance Logs table - Records of completed safety inspections
+ * Proof that a safety check was performed by a technician
+ */
+export const complianceLogs = pgTable('compliance_logs', {
   id: uuid('id').primaryKey().defaultRandom(),
-  habitId: uuid('habit_id')
-    .references(() => habits.id, { onDelete: 'cascade' })
+  protocolId: uuid('protocol_id')
+    .references(() => protocols.id, { onDelete: 'cascade' })
     .notNull(),
+  /** Timestamp when the safety inspection was completed */
   completionDate: timestamp('completion_date').defaultNow().notNull(),
+  /** Technician observations (e.g., "Gloves showed wear, replaced") */
   note: text('note'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
-export const tags = pgTable('tags', {
+/**
+ * Hazard Zones table - Categorization of protocols by risk level or location
+ * Examples: "High Voltage Area" (Red), "Chemical Storage" (Yellow), "General Workspace" (Green)
+ */
+export const hazardZones = pgTable('hazard_zones', {
   id: uuid('id').primaryKey().defaultRandom(),
+  /** Zone name (e.g., "High Voltage Area", "Chemical Storage", "Confined Spaces") */
   name: varchar('name', { length: 50 }).notNull().unique(),
-  color: varchar('color', { length: 7 }).default('#6b7288'),
+  /** Color hex code for risk level indicator - Red (#dc2626): High Risk, Yellow (#eab308): Medium Risk, Green (#16a34a): Low Risk */
+  color: varchar('color', { length: 7 }).default('#16a34a'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
-export const habitTags = pgTable('habitTags', {
+/**
+ * Protocol Zones table - Many-to-many relationship between protocols and hazard zones
+ */
+export const protocolZones = pgTable('protocol_zones', {
   id: uuid('id').primaryKey().defaultRandom(),
-  habitId: uuid('habit_id').references(() => habits.id, { onDelete: 'cascade' }).notNull(),
-  tagId: uuid('tag_id').references(() => tags.id, { onDelete: 'cascade' }).notNull(),
+  protocolId: uuid('protocol_id').references(() => protocols.id, { onDelete: 'cascade' }).notNull(),
+  zoneId: uuid('zone_id').references(() => hazardZones.id, { onDelete: 'cascade' }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
 export const userRelations = relations(users, ({ many }) => ({
-  habits: many(habits),
+  protocols: many(protocols),
 }))
 
-export const habitsRelations = relations(habits, ({ one, many }) => ({
+export const protocolsRelations = relations(protocols, ({ one, many }) => ({
   user: one(users, {
-    fields: [habits.userId],
+    fields: [protocols.userId],
     references: [users.id],
   }),
-  entries: many(entries),
-  habitTags: many(habitTags),
+  complianceLogs: many(complianceLogs),
+  protocolZones: many(protocolZones),
 }))
 
-export const entriesRelations = relations(entries, ({ one }) => ({
-  habit: one(habits, {
-    fields: [entries.habitId],
-    references: [habits.id],
+export const complianceLogsRelations = relations(complianceLogs, ({ one }) => ({
+  protocol: one(protocols, {
+    fields: [complianceLogs.protocolId],
+    references: [protocols.id],
   }),
 }))
 
-export const tagsRelations = relations(tags, ({ many }) => ({
-  habitTags: many(habitTags),
+export const hazardZonesRelations = relations(hazardZones, ({ many }) => ({
+  protocolZones: many(protocolZones),
 }))
 
-export const habitTagsRelations = relations(habitTags, ({ one }) => ({
-  habit: one(habits, {
-    fields: [habitTags.habitId],
-    references: [habits.id],
+export const protocolZonesRelations = relations(protocolZones, ({ one }) => ({
+  protocol: one(protocols, {
+    fields: [protocolZones.protocolId],
+    references: [protocols.id],
   }),
-  tag: one(tags, {
-    fields: [habitTags.tagId],
-    references: [tags.id],
+  hazardZone: one(hazardZones, {
+    fields: [protocolZones.zoneId],
+    references: [hazardZones.id],
   }),
 }))
 
 
-export  type User = typeof users.$inferSelect
+// Type exports for SafeSite domain model
+export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
-export  type Habit = typeof habits.$inferSelect
-export  type newHabit = typeof habits.$inferInsert
-export  type Entry = typeof entries.$inferSelect
-export  type Tag = typeof tags.$inferSelect
-export  type HabitTag = typeof habitTags.$inferSelect
+export type Protocol = typeof protocols.$inferSelect
+export type NewProtocol = typeof protocols.$inferInsert
+export type ComplianceLog = typeof complianceLogs.$inferSelect
+export type NewComplianceLog = typeof complianceLogs.$inferInsert
+export type HazardZone = typeof hazardZones.$inferSelect
+export type NewHazardZone = typeof hazardZones.$inferInsert
+export type ProtocolZone = typeof protocolZones.$inferSelect
+export type NewProtocolZone = typeof protocolZones.$inferInsert
 
+// Zod schemas for validation
 export const insertUserSchema = createInsertSchema(users)
 export const selectUserSchema = createSelectSchema(users)
+export const insertProtocolSchema = createInsertSchema(protocols)
+export const selectProtocolSchema = createSelectSchema(protocols)
+export const insertComplianceLogSchema = createInsertSchema(complianceLogs)
+export const selectComplianceLogSchema = createSelectSchema(complianceLogs)
+export const insertHazardZoneSchema = createInsertSchema(hazardZones)
+export const selectHazardZoneSchema = createSelectSchema(hazardZones)

@@ -1,16 +1,16 @@
 import { db } from '../../src/db/connection.ts'
-import { users, habits, entries, tags, habitTags} from '../../src/db/schema.ts'
+import { users, protocols, complianceLogs, hazardZones, protocolZones } from '../../src/db/schema.ts'
 import { sql } from 'drizzle-orm'
 import { execSync } from 'child_process'
 
 
 export default async function setup() {
-  console.log('setting up the test db...')
+  console.log('Setting up the SafeSite test database...')
   try {
-    await db.execute(sql`DROP TABLE IF EXISTS ${habitTags} CASCADE;`);
-    await db.execute(sql`DROP TABLE IF EXISTS ${tags} CASCADE;`);
-    await db.execute(sql`DROP TABLE IF EXISTS ${entries} CASCADE;`);
-    await db.execute(sql`DROP TABLE IF EXISTS ${habits} CASCADE;`);
+    await db.execute(sql`DROP TABLE IF EXISTS ${complianceLogs} CASCADE;`);
+    await db.execute(sql`DROP TABLE IF EXISTS ${protocolZones} CASCADE;`);
+    await db.execute(sql`DROP TABLE IF EXISTS ${protocols} CASCADE;`);
+    await db.execute(sql`DROP TABLE IF EXISTS ${hazardZones} CASCADE;`);
     await db.execute(sql`DROP TABLE IF EXISTS ${users} CASCADE;`);
     execSync(`npx drizzle-kit push --url="${process.env.DATABASE_URL}" --schema=./src/db/schema.ts --dialect=postgresql`, 
       { 
@@ -18,23 +18,23 @@ export default async function setup() {
         cwd: process.cwd()
       }
     );
-    console.log('test db is set up')
+    console.log('SafeSite test database is ready')
   } catch (e) {
-    console.error(' Fail to setup test db', e)
+    console.error('Failed to setup test database', e)
     throw e
   
   }
 
   return async () => {
     try {
-      await db.execute(sql`DROP TABLE IF EXISTS ${habitTags} CASCADE;`);
-      await db.execute(sql`DROP TABLE IF EXISTS ${tags} CASCADE;`);
-      await db.execute(sql`DROP TABLE IF EXISTS ${entries} CASCADE;`);
-      await db.execute(sql`DROP TABLE IF EXISTS ${habits} CASCADE;`);
+      await db.execute(sql`DROP TABLE IF EXISTS ${complianceLogs} CASCADE;`);
+      await db.execute(sql`DROP TABLE IF EXISTS ${protocolZones} CASCADE;`);
+      await db.execute(sql`DROP TABLE IF EXISTS ${protocols} CASCADE;`);
+      await db.execute(sql`DROP TABLE IF EXISTS ${hazardZones} CASCADE;`);
       await db.execute(sql`DROP TABLE IF EXISTS ${users} CASCADE;`);
       process.exit(0)
     } catch (e) {
-      console.error(' Fail to setup test db', e)
+      console.error('Failed to tear down test database', e)
       throw e
     }
   }

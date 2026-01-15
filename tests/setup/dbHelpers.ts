@@ -1,13 +1,22 @@
-import {db} from '../../src/db/connection.ts'
-import {users, habits, entries, tags, type NewUser, type newHabit, habitTags} from '../../src/db/schema.ts'
-import {hashPassword} from '../../src/utils/passwords.ts'
-import {generateToken} from '../../src/utils/jwt.ts'
+import { db } from '../../src/db/connection.ts'
+import { 
+  users, 
+  protocols, 
+  complianceLogs, 
+  hazardZones, 
+  type NewUser, 
+  type NewProtocol, 
+  type NewHazardZone,
+  protocolZones 
+} from '../../src/db/schema.ts'
+import { hashPassword } from '../../src/utils/passwords.ts'
+import { generateToken } from '../../src/utils/jwt.ts'
 
-export const createTestUser = async (userData: Partial<NewUser> = {} ) => {
+export const createTestUser = async (userData: Partial<NewUser> = {}) => {
   const defaultData = {
     email: `test-${Date.now()}-${Math.random()}@example.com`,
     username: `test-${Date.now()}-${Math.random()}`,
-    password: 'password',
+    password: 'SafetyFirst123!',
     firstName: 'John',
     lastName: 'Doe',
     ...userData,
@@ -20,38 +29,58 @@ export const createTestUser = async (userData: Partial<NewUser> = {} ) => {
   })
   .returning()
 
-  const token = generateToken({
+  const token = await generateToken({
     id: user.id,
     email: user.email,
     username: user.username,
   })
 
-  return {token, user, rawPassword: defaultData.password}
+  return { token, user, rawPassword: defaultData.password }
 }
 
-export const createTestHabit = async (userId: string, habitData: Partial<newHabit>) => {
-  const defaultData = { 
-    name: `Test habit ${Date.now()}`,
-    description: 'A test habit',
-    frequency: 'Daily',
+export const createTestProtocol = async (userId: string, protocolData: Partial<NewProtocol & { zoneIds?: string[] }> = {}) => {
+  const { zoneIds, ...defaultData } = { 
+    name: `Test Protocol ${Date.now()}`,
+    description: 'A test safety protocol',
+    frequency: 'DAILY',
     targetCount: 1,
-    ...habitData,
+    ...protocolData,
   }
 
-  const [habit] = await db.insert(habits).values({
+  const [protocol] = await db.insert(protocols).values({
     userId,
     ...defaultData,
   })
   .returning()
 
-  return habit 
+  // Associate with zones if provided
+  if (zoneIds && zoneIds.length > 0) {
+    await db.insert(protocolZones).values(
+      zoneIds.map(zoneId => ({
+        protocolId: protocol.id,
+        zoneId,
+      }))
+    )
+  }
+
+  return protocol 
 }
 
+export const createTestHazardZone = async (zoneData: Partial<NewHazardZone> = {}) => {
+  const defaultData = {
+    name: `Test Zone ${Date.now()}`,
+    color: '#16a34a',
+    ...zoneData,
+  }
+
+  const [zone] = await db.insert(hazardZones).values(defaultData).returning()
+  return zone
+}
 
 export const cleanUpDataBase = async () => {
-  await db.delete(entries)
-  await db.delete(habits)
+  await db.delete(complianceLogs)
+  await db.delete(protocolZones)
+  await db.delete(protocols)
+  await db.delete(hazardZones)
   await db.delete(users)
-  await db.delete(habitTags)
-  await db.delete(tags)
 }
