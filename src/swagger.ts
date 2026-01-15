@@ -1,6 +1,8 @@
 import swaggerJsdoc from 'swagger-jsdoc'
 import { env } from '../env.ts'
 
+const isProduction = env.NODE_ENV === 'production'
+
 const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
@@ -17,14 +19,19 @@ const options: swaggerJsdoc.Options = {
         url: 'https://opensource.org/licenses/MIT'
       }
     },
-    servers: [
+    servers: isProduction ? [
+      {
+        url: '/',
+        description: 'Production server (uses current domain)'
+      }
+    ] : [
       {
         url: `http://localhost:${env.PORT}`,
         description: 'Development server'
       },
       {
-        url: 'https://api.safesite.com',
-        description: 'Production server'
+        url: '/',
+        description: 'Current domain'
       }
     ],
     components: {

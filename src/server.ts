@@ -12,7 +12,16 @@ import swaggerUi from 'swagger-ui-express'
 import { swaggerSpec } from './swagger.ts'
 
 const app = express()
-app.use(helmet())
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    }
+  }
+}))
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true}))
@@ -86,7 +95,9 @@ app.get('/', swaggerUi.setup(swaggerSpec, {
     persistAuthorization: true,
     displayRequestDuration: true,
     filter: true,
-    tryItOutEnabled: true
+    tryItOutEnabled: true,
+    url: undefined, // Forces Swagger to use the spec provided directly
+    validatorUrl: null // Disable schema validation to avoid external requests
   }
 }))
 
